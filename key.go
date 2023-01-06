@@ -1,10 +1,10 @@
-package flatfs
+package aiozfs
 
 import (
 	"github.com/ipfs/go-datastore"
 )
 
-// keyIsValid returns true if the key is valid for flatfs.
+// keyIsValid returns true if the key is valid for aiozfs.
 // Allows keys that match [0-9A-Z+-_=].
 func keyIsValid(key datastore.Key) bool {
 	ks := key.String()

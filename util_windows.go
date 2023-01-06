@@ -8,7 +8,7 @@
 // src/io/ioutil/tempfile.go
 // with calls to os.Open replaced with the goissue34681.Open variant.
 
-package flatfs
+package aiozfs
 
 import (
 	"bytes"

@@ -1,7 +1,7 @@
-// Package flatfs is a Datastore implementation that stores all
+// Package aiozfs is a Datastore implementation that stores all
 // objects in a two-level directory structure in the local file
 // system, regardless of the hierarchy of the keys.
-package flatfs
+package aiozfs
 
 import (
 	"context"
@@ -139,7 +139,7 @@ func Move(oldPath string, newPath string, out io.Writer) error {
 						return err
 					}
 				} else {
-					return errors.New("unknown file in flatfs: " + p)
+					return errors.New("unknown file in aiozfs: " + p)
 				}
 			}
 

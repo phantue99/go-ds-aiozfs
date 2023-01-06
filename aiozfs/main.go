@@ -5,22 +5,22 @@ import (
 	"os"
 	"strconv"
 
-	flatfs "github.com/ipfs/go-ds-flatfs"
+	aiozfs "github.com/ipfs/go-ds-aiozfs"
 )
 
 // To convert from the old format to a new format with a different
 // sharding function use:
-//   flatfs upgrade blocks 5
-//   flatfs create blocks-new v1/next-to-last/2
-//   flatfs move blocks blocks-new
+//   aiozfs upgrade blocks 5
+//   aiozfs create blocks-new v1/next-to-last/2
+//   aiozfs move blocks blocks-new
 //   rmdir blocks
 //   mv blocks-new blocks
 // to do the reverse
-//   flatfs create blocks-new v1/prefix/5
-//   flatfs move blocks blocks-new
+//   aiozfs create blocks-new v1/prefix/5
+//   aiozfs move blocks blocks-new
 //   rmdir blocks
 //   mv blocks-new blocks
-//   flatfs downgrade blocks
+//   aiozfs downgrade blocks
 
 func usage() {
 	fmt.Fprintf(os.Stderr, "usage: %s create DIR SHARDFUN | upgrade DIR PREFIXLEN | downgrade DIR | move OLDDIR NEWDIR\n", os.Args[0])
@@ -48,13 +48,13 @@ func main() {
 			if funStr[0] != 'v' { // and version if not provided
 				funStr = "v1/" + funStr
 			}
-			funStr = flatfs.PREFIX + funStr
+			funStr = aiozfs.PREFIX + funStr
 		}
-		fun, err := flatfs.ParseShardFunc(funStr)
+		fun, err := aiozfs.ParseShardFunc(funStr)
 		if err != nil {
 			fail(err)
 		}
-		err = flatfs.Create(dir, fun)
+		err = aiozfs.Create(dir, fun)
 		if err != nil {
 			fail(err)
 		}
@@ -67,7 +67,7 @@ func main() {
 		if err != nil {
 			fail(err)
 		}
-		err = flatfs.UpgradeV0toV1(dir, prefixLen)
+		err = aiozfs.UpgradeV0toV1(dir, prefixLen)
 		if err != nil {
 			fail(err)
 		}
@@ -76,7 +76,7 @@ func main() {
 			usage()
 		}
 		dir := os.Args[2]
-		err := flatfs.DowngradeV1toV0(dir)
+		err := aiozfs.DowngradeV1toV0(dir)
 		if err != nil {
 			fail(err)
 		}
@@ -86,7 +86,7 @@ func main() {
 		}
 		oldDir := os.Args[2]
 		newDir := os.Args[3]
-		err := flatfs.Move(oldDir, newDir, os.Stderr)
+		err := aiozfs.Move(oldDir, newDir, os.Stderr)
 		if err != nil {
 			fail(err)
 		}

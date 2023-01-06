@@ -1,7 +1,7 @@
-// Package flatfs is a Datastore implementation that stores all
+// Package aiozfs is a Datastore implementation that stores all
 // objects in a two-level directory structure in the local file
 // system, regardless of the hierarchy of the keys.
-package flatfs
+package aiozfs
 
 import (
 	"context"
@@ -25,7 +25,7 @@ import (
 	logging "github.com/ipfs/go-log"
 )
 
-var log = logging.Logger("flatfs")
+var log = logging.Logger("aiozfs")
 
 const (
 	extension                  = ".data"
@@ -99,14 +99,14 @@ func combineAccuracy(a, b initAccuracy) initAccuracy {
 var _ datastore.Datastore = (*Datastore)(nil)
 var _ datastore.PersistentDatastore = (*Datastore)(nil)
 var _ datastore.Batching = (*Datastore)(nil)
-var _ datastore.Batch = (*flatfsBatch)(nil)
+var _ datastore.Batch = (*aiozfsBatch)(nil)
 
 var (
 	ErrDatastoreExists       = errors.New("datastore already exists")
 	ErrDatastoreDoesNotExist = errors.New("datastore directory does not exist")
 	ErrShardingFileMissing   = fmt.Errorf("%s file not found in datastore", SHARDING_FN)
 	ErrClosed                = errors.New("datastore closed")
-	ErrInvalidKey            = errors.New("key not supported by flatfs")
+	ErrInvalidKey            = errors.New("key not supported by aiozfs")
 )
 
 func init() {
@@ -327,7 +327,7 @@ func (fs *Datastore) decode(file string) (key datastore.Key, ok bool) {
 		// We expect random files like "put-". Log when we encounter
 		// others.
 		if !strings.HasPrefix(file, "put-") {
-			log.Warnw("failed to decode flatfs filename", "file", file)
+			log.Warnw("failed to decode aiozfs filename", "file", file)
 		}
 		return datastore.Key{}, false
 	}
@@ -654,7 +654,7 @@ func (fs *Datastore) putMany(data map[datastore.Key][]byte) error {
 			}
 		}
 
-		// sync top flatfs dir
+		// sync top aiozfs dir
 		if err := syncDir(fs.path); err != nil {
 			return err
 		}
@@ -770,7 +770,7 @@ func (fs *Datastore) Query(ctx context.Context, q query.Query) (query.Results, e
 		// Therefore, it's always correct to return an empty result when
 		// the user requests a filter by prefix.
 		log.Warnw(
-			"flatfs was queried with a key prefix but flatfs only supports keys at the root",
+			"aiozfs was queried with a key prefix but aiozfs only supports keys at the root",
 			"prefix", q.Prefix,
 			"query", q,
 		)
@@ -1223,7 +1223,7 @@ func (fs *Datastore) Close() error {
 	return nil
 }
 
-type flatfsBatch struct {
+type aiozfsBatch struct {
 	puts    map[datastore.Key][]byte
 	deletes map[datastore.Key]struct{}
 
@@ -1231,14 +1231,14 @@ type flatfsBatch struct {
 }
 
 func (fs *Datastore) Batch(_ context.Context) (datastore.Batch, error) {
-	return &flatfsBatch{
+	return &aiozfsBatch{
 		puts:    make(map[datastore.Key][]byte),
 		deletes: make(map[datastore.Key]struct{}),
 		ds:      fs,
 	}, nil
 }
 
-func (bt *flatfsBatch) Put(ctx context.Context, key datastore.Key, val []byte) error {
+func (bt *aiozfsBatch) Put(ctx context.Context, key datastore.Key, val []byte) error {
 	if !keyIsValid(key) {
 		return fmt.Errorf("when putting '%q': %v", key, ErrInvalidKey)
 	}
@@ -1246,14 +1246,14 @@ func (bt *flatfsBatch) Put(ctx context.Context, key datastore.Key, val []byte) e
 	return nil
 }
 
-func (bt *flatfsBatch) Delete(ctx context.Context, key datastore.Key) error {
+func (bt *aiozfsBatch) Delete(ctx context.Context, key datastore.Key) error {
 	if keyIsValid(key) {
 		bt.deletes[key] = struct{}{}
 	} // otherwise, delete is a no-op anyways.
 	return nil
 }
 
-func (bt *flatfsBatch) Commit(ctx context.Context) error {
+func (bt *aiozfsBatch) Commit(ctx context.Context) error {
 	if err := bt.ds.putMany(bt.puts); err != nil {
 		return err
 	}

@@ -1,17 +1,17 @@
-# go-ds-flatfs
+# go-ds-aiozfs
 
 [![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](http://ipn.io)
 [![](https://img.shields.io/badge/project-IPFS-blue.svg?style=flat-square)](http://ipfs.io/)
 [![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23ipfs)
 [![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
-[![GoDoc](https://godoc.org/github.com/ipfs/go-ds-flatfs?status.svg)](https://godoc.org/github.com/ipfs/go-ds-flatfs)
-[![Build Status](https://travis-ci.org/ipfs/go-ds-flatfs.svg?branch=master)](https://travis-ci.org/ipfs/go-ds-flatfs)
-[![Coverage Status](https://img.shields.io/codecov/c/github/ipfs/go-ds-flatfs.svg)](https://codecov.io/gh/ipfs/go-ds-flatfs)
+[![GoDoc](https://godoc.org/github.com/ipfs/go-ds-aiozfs?status.svg)](https://godoc.org/github.com/ipfs/go-ds-aiozfs)
+[![Build Status](https://travis-ci.org/ipfs/go-ds-aiozfs.svg?branch=master)](https://travis-ci.org/ipfs/go-ds-aiozfs)
+[![Coverage Status](https://img.shields.io/codecov/c/github/ipfs/go-ds-aiozfs.svg)](https://codecov.io/gh/ipfs/go-ds-aiozfs)
 
 
 > A datastore implementation using sharded directories and flat files to store data
 
-`go-ds-flatfs` is used by `go-ipfs` to store raw block contents on disk. It supports several sharding functions (prefix, suffix, next-to-last/*).
+`go-ds-aiozfs` is used by `go-ipfs` to store raw block contents on disk. It supports several sharding functions (prefix, suffix, next-to-last/*).
 
 It is _not_ a general-purpose datastore and has several important restrictions.
 See the restrictions section for details.
@@ -29,21 +29,21 @@ See the restrictions section for details.
 
 ## Install
 
-`go-ds-flatfs` can be used like any Go module:
+`go-ds-aiozfs` can be used like any Go module:
 
 
 ```
-import "github.com/ipfs/go-ds-flatfs"
+import "github.com/ipfs/go-ds-aiozfs"
 ```
 
 ## Usage
 
-Check the [GoDoc module documentation](https://godoc.org/github.com/ipfs/go-ds-flatfs) for an overview of this module's
+Check the [GoDoc module documentation](https://godoc.org/github.com/ipfs/go-ds-aiozfs) for an overview of this module's
 functionality.
 
 ### Restrictions
 
-FlatFS keys are severely restricted. Only keys that match `/[0-9A-Z+-_=]\+` are
+aiozfs keys are severely restricted. Only keys that match `/[0-9A-Z+-_=]\+` are
 allowed. That is, keys may only contain upper-case alpha-numeric characters,
 '-', '+', '_', and '='. This is because values are written directly to the
 filesystem without encoding.

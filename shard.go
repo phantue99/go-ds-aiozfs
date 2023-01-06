@@ -1,4 +1,4 @@
-package flatfs
+package aiozfs
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 var IPFS_DEF_SHARD = NextToLast(2)
 var IPFS_DEF_SHARD_STR = IPFS_DEF_SHARD.String()
 
-const PREFIX = "/repo/flatfs/shard/"
+const PREFIX = "/repo/aiozfs/shard/"
 
 const SHARDING_FN = "SHARDING"
 const README_FN = "_README"

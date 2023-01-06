@@ -1,4 +1,4 @@
-package flatfs
+package aiozfs
 
 import (
 	"os"

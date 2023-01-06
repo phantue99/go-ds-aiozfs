@@ -1,4 +1,4 @@
-package flatfs_test
+package aiozfs_test
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/ipfs/go-datastore"
-	flatfs "github.com/ipfs/go-ds-flatfs"
+	aiozfs "github.com/ipfs/go-ds-aiozfs"
 )
 
 func TestMove(t *testing.T) {
@@ -19,7 +19,7 @@ func TestMove(t *testing.T) {
 	defer cleanup()
 
 	v1dir := filepath.Join(tempdir, "v1")
-	createDatastore(t, v1dir, flatfs.Prefix(3))
+	createDatastore(t, v1dir, aiozfs.Prefix(3))
 
 	err := os.WriteFile(filepath.Join(v1dir, "README_ALSO"), []byte("something"), 0666)
 	if err != nil {
@@ -29,9 +29,9 @@ func TestMove(t *testing.T) {
 	keys, blocks := populateDatastore(t, v1dir)
 
 	v2dir := filepath.Join(tempdir, "v2")
-	createDatastore(t, v2dir, flatfs.NextToLast(2))
+	createDatastore(t, v2dir, aiozfs.NextToLast(2))
 
-	err = flatfs.Move(v1dir, v2dir, nil)
+	err = aiozfs.Move(v1dir, v2dir, nil)
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -49,7 +49,7 @@ func TestMove(t *testing.T) {
 	checkKeys(t, v2dir, keys, blocks)
 
 	// check that a key is in the correct format
-	shard := filepath.Join(v2dir, flatfs.NextToLast(2).Func()(keys[0].String()))
+	shard := filepath.Join(v2dir, aiozfs.NextToLast(2).Func()(keys[0].String()))
 	_, err = os.Stat(shard)
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -66,16 +66,16 @@ func TestMoveRestart(t *testing.T) {
 	v1dir := filepath.Join(tempdir, "v1")
 	v2dir := filepath.Join(tempdir, "v2")
 
-	createDatastore(t, v1dir, flatfs.Prefix(3))
+	createDatastore(t, v1dir, aiozfs.Prefix(3))
 
-	createDatastore(t, v2dir, flatfs.NextToLast(5))
+	createDatastore(t, v2dir, aiozfs.NextToLast(5))
 
 	keys, blocks := populateDatastore(t, v1dir)
 	checkKeys(t, v1dir, keys, blocks)
 
 	// get a directory in the datastore
 	noslash := keys[0].String()[1:]
-	aDir := filepath.Join(tempdir, "v1", flatfs.Prefix(3).Func()(noslash))
+	aDir := filepath.Join(tempdir, "v1", aiozfs.Prefix(3).Func()(noslash))
 
 	// create a permission problem on the directory
 	err := os.Chmod(aDir, 0500)
@@ -84,13 +84,13 @@ func TestMoveRestart(t *testing.T) {
 	}
 
 	// try the move it should fail partly through
-	err = flatfs.Move(v1dir, v2dir, nil)
+	err = aiozfs.Move(v1dir, v2dir, nil)
 	if err == nil {
 		t.Fatal("Move should have failed.", err)
 	}
 
 	// okay try to undo should be okay
-	err = flatfs.Move(v2dir, v1dir, nil)
+	err = aiozfs.Move(v2dir, v1dir, nil)
 	if err != nil {
 		t.Fatal("Could not undo the move.", err)
 	}
@@ -100,8 +100,8 @@ func TestMoveRestart(t *testing.T) {
 	rmEmptyDatastore(t, v2dir)
 
 	// try the move again, again should fail
-	createDatastore(t, v2dir, flatfs.NextToLast(2))
-	err = flatfs.Move(v1dir, v2dir, nil)
+	createDatastore(t, v2dir, aiozfs.NextToLast(2))
+	err = aiozfs.Move(v1dir, v2dir, nil)
 	if err == nil {
 		t.Fatal("Move should have failed.", err)
 	}
@@ -113,7 +113,7 @@ func TestMoveRestart(t *testing.T) {
 	}
 
 	// restart the move, it should be okay now
-	err = flatfs.Move(v1dir, v2dir, nil)
+	err = aiozfs.Move(v1dir, v2dir, nil)
 	if err != nil {
 		t.Fatalf("Move not okay: %v\n", err)
 	}
@@ -125,7 +125,7 @@ func TestMoveRestart(t *testing.T) {
 	checkKeys(t, v2dir, keys, blocks)
 
 	// check that a key is in the correct format
-	shard := filepath.Join(v2dir, flatfs.NextToLast(2).Func()(keys[0].String()))
+	shard := filepath.Join(v2dir, aiozfs.NextToLast(2).Func()(keys[0].String()))
 	_, err = os.Stat(shard)
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -136,29 +136,29 @@ func TestUpgradeDownload(t *testing.T) {
 	tempdir, cleanup := tempdir(t)
 	defer cleanup()
 
-	createDatastore(t, tempdir, flatfs.Prefix(3))
+	createDatastore(t, tempdir, aiozfs.Prefix(3))
 
 	keys, blocks := populateDatastore(t, tempdir)
 	checkKeys(t, tempdir, keys, blocks)
 
-	err := flatfs.UpgradeV0toV1(tempdir, 3)
+	err := aiozfs.UpgradeV0toV1(tempdir, 3)
 	if err == nil {
 		t.Fatalf("UpgradeV0toV1 on already v1 should fail.")
 	}
 
-	err = flatfs.DowngradeV1toV0(tempdir)
+	err = aiozfs.DowngradeV1toV0(tempdir)
 	if err != nil {
 		t.Fatalf("DowngradeV1toV0 fail: %v\n", err)
 	}
 
-	_, err = os.Stat(filepath.Join(tempdir, flatfs.SHARDING_FN))
+	_, err = os.Stat(filepath.Join(tempdir, aiozfs.SHARDING_FN))
 	if err == nil {
 		t.Fatalf("%v not in v0 format, SHARDING FILE exists", tempdir)
 	} else if !os.IsNotExist(err) {
 		t.Fatalf("Stat fail: %v\n", err)
 	}
 
-	err = flatfs.UpgradeV0toV1(tempdir, 3)
+	err = aiozfs.UpgradeV0toV1(tempdir, 3)
 	if err != nil {
 		t.Fatalf("UpgradeV0toV1 fail %v\n", err)
 	}
@@ -171,16 +171,16 @@ func TestDownloadNonPrefix(t *testing.T) {
 	tempdir, cleanup := tempdir(t)
 	defer cleanup()
 
-	createDatastore(t, tempdir, flatfs.NextToLast(2))
+	createDatastore(t, tempdir, aiozfs.NextToLast(2))
 
-	err := flatfs.DowngradeV1toV0(tempdir)
+	err := aiozfs.DowngradeV1toV0(tempdir)
 	if err == nil {
 		t.Fatal("DowngradeV1toV0 should have failed", err)
 	}
 }
 
-func createDatastore(t *testing.T, dir string, fun *flatfs.ShardIdV1) {
-	err := flatfs.Create(dir, fun)
+func createDatastore(t *testing.T, dir string, fun *aiozfs.ShardIdV1) {
+	err := aiozfs.Create(dir, fun)
 	if err != nil {
 		t.Fatalf("Create fail: %s: %v\n", dir, err)
 	}
@@ -194,7 +194,7 @@ func rmEmptyDatastore(t *testing.T, dir string) {
 }
 
 func populateDatastore(t *testing.T, dir string) ([]datastore.Key, [][]byte) {
-	ds, err := flatfs.Open(dir, false)
+	ds, err := aiozfs.Open(dir, false)
 	if err != nil {
 		t.Fatalf("Open fail: %v\n", err)
 	}
@@ -220,7 +220,7 @@ func populateDatastore(t *testing.T, dir string) ([]datastore.Key, [][]byte) {
 }
 
 func checkKeys(t *testing.T, dir string, keys []datastore.Key, blocks [][]byte) {
-	ds, err := flatfs.Open(dir, false)
+	ds, err := aiozfs.Open(dir, false)
 	if err != nil {
 		t.Fatalf("Open fail: %v\n", err)
 	}

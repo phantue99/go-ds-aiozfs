@@ -1,6 +1,6 @@
 //go:build !windows
 
-package flatfs
+package aiozfs
 
 import (
 	"os"

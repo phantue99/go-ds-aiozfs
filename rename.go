@@ -1,6 +1,6 @@
 //go:build !plan9
 
-package flatfs
+package aiozfs
 
 import "os"
 

@@ -1,4 +1,4 @@
-package flatfs_test
+package aiozfs_test
 
 import (
 	"context"
@@ -20,7 +20,7 @@ import (
 	"github.com/ipfs/go-datastore/query"
 	dstest "github.com/ipfs/go-datastore/test"
 
-	flatfs "github.com/ipfs/go-ds-flatfs"
+	aiozfs "github.com/ipfs/go-ds-aiozfs"
 )
 
 var bg = context.Background()
@@ -46,7 +46,7 @@ func checkTemp(t *testing.T, dir string) {
 }
 
 func tempdir(t testing.TB) (path string, cleanup func()) {
-	path, err := os.MkdirTemp("", "test-datastore-flatfs-")
+	path, err := os.MkdirTemp("", "test-datastore-aiozfs-")
 	if err != nil {
 		t.Fatalf("cannot create temp directory: %v", err)
 	}
@@ -60,19 +60,19 @@ func tempdir(t testing.TB) (path string, cleanup func()) {
 }
 
 func tryAllShardFuncs(t *testing.T, testFunc func(mkShardFunc, *testing.T)) {
-	t.Run("prefix", func(t *testing.T) { testFunc(flatfs.Prefix, t) })
-	t.Run("suffix", func(t *testing.T) { testFunc(flatfs.Suffix, t) })
-	t.Run("next-to-last", func(t *testing.T) { testFunc(flatfs.NextToLast, t) })
+	t.Run("prefix", func(t *testing.T) { testFunc(aiozfs.Prefix, t) })
+	t.Run("suffix", func(t *testing.T) { testFunc(aiozfs.Suffix, t) })
+	t.Run("next-to-last", func(t *testing.T) { testFunc(aiozfs.NextToLast, t) })
 }
 
-type mkShardFunc func(int) *flatfs.ShardIdV1
+type mkShardFunc func(int) *aiozfs.ShardIdV1
 
 func testBatch(dirFunc mkShardFunc, t *testing.T) {
 	temp, cleanup := tempdir(t)
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -135,7 +135,7 @@ func testPut(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -159,7 +159,7 @@ func testGet(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -192,7 +192,7 @@ func testPutOverwrite(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -228,7 +228,7 @@ func testGetNotFoundError(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -243,7 +243,7 @@ func testGetNotFoundError(dirFunc mkShardFunc, t *testing.T) {
 func TestGetNotFoundError(t *testing.T) { tryAllShardFuncs(t, testGetNotFoundError) }
 
 type params struct {
-	shard *flatfs.ShardIdV1
+	shard *aiozfs.ShardIdV1
 	dir   string
 	key   string
 }
@@ -254,7 +254,7 @@ func testStorage(p *params, t *testing.T) {
 	defer checkTemp(t, temp)
 
 	target := p.dir + string(os.PathSeparator) + p.key + ".data"
-	fs, err := flatfs.CreateOrOpen(temp, p.shard, false)
+	fs, err := aiozfs.CreateOrOpen(temp, p.shard, false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -277,7 +277,7 @@ func testStorage(p *params, t *testing.T) {
 			return err
 		}
 		switch path {
-		case ".", "..", "SHARDING", flatfs.DiskUsageFile, ".temp":
+		case ".", "..", "SHARDING", aiozfs.DiskUsageFile, ".temp":
 			// ignore
 		case "_README":
 			_, err := os.ReadFile(absPath)
@@ -312,9 +312,9 @@ func testStorage(p *params, t *testing.T) {
 	if !seen {
 		t.Error("did not see the data file")
 	}
-	if fs.ShardStr() == flatfs.IPFS_DEF_SHARD_STR && !haveREADME {
+	if fs.ShardStr() == aiozfs.IPFS_DEF_SHARD_STR && !haveREADME {
 		t.Error("expected _README file")
-	} else if fs.ShardStr() != flatfs.IPFS_DEF_SHARD_STR && haveREADME {
+	} else if fs.ShardStr() != aiozfs.IPFS_DEF_SHARD_STR && haveREADME {
 		t.Error("did not expect _README file")
 	}
 }
@@ -322,21 +322,21 @@ func testStorage(p *params, t *testing.T) {
 func TestStorage(t *testing.T) {
 	t.Run("prefix", func(t *testing.T) {
 		testStorage(&params{
-			shard: flatfs.Prefix(2),
+			shard: aiozfs.Prefix(2),
 			dir:   "QU",
 			key:   "QUUX",
 		}, t)
 	})
 	t.Run("suffix", func(t *testing.T) {
 		testStorage(&params{
-			shard: flatfs.Suffix(2),
+			shard: aiozfs.Suffix(2),
 			dir:   "UX",
 			key:   "QUUX",
 		}, t)
 	})
 	t.Run("next-to-last", func(t *testing.T) {
 		testStorage(&params{
-			shard: flatfs.NextToLast(2),
+			shard: aiozfs.NextToLast(2),
 			dir:   "UU",
 			key:   "QUUX",
 		}, t)
@@ -348,7 +348,7 @@ func testHasNotFound(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -370,7 +370,7 @@ func testHasFound(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -397,7 +397,7 @@ func testGetSizeFound(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -416,7 +416,7 @@ func testGetSizeNotFound(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -443,7 +443,7 @@ func testDeleteNotFound(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -462,7 +462,7 @@ func testDeleteFound(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -492,7 +492,7 @@ func testQuerySimple(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -533,7 +533,7 @@ func testDiskUsage(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -586,7 +586,7 @@ func testDiskUsage(dirFunc mkShardFunc, t *testing.T) {
 	fs.Close()
 
 	// Check that disk usage file is correct
-	duB, err := os.ReadFile(filepath.Join(temp, flatfs.DiskUsageFile))
+	duB, err := os.ReadFile(filepath.Join(temp, aiozfs.DiskUsageFile))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -599,18 +599,18 @@ func testDiskUsage(dirFunc mkShardFunc, t *testing.T) {
 	// Make sure diskUsage value is correct
 	if val, ok := contents["diskUsage"].(float64); !ok || uint64(val) != du {
 		t.Fatalf("Unexpected value for diskUsage in %s: %v (expected %d)",
-			flatfs.DiskUsageFile, contents["diskUsage"], du)
+			aiozfs.DiskUsageFile, contents["diskUsage"], du)
 	}
 
 	// Make sure the accuracy value is correct
 	if val, ok := contents["accuracy"].(string); !ok || val != "initial-exact" {
 		t.Fatalf("Unexpected value for accuracyin %s: %v",
-			flatfs.DiskUsageFile, contents["accuracy"])
+			aiozfs.DiskUsageFile, contents["accuracy"])
 	}
 
 	// Make sure size is correctly calculated on re-open
-	os.Remove(filepath.Join(temp, flatfs.DiskUsageFile))
-	fs, err = flatfs.Open(temp, false)
+	os.Remove(filepath.Join(temp, aiozfs.DiskUsageFile))
+	fs, err = aiozfs.Open(temp, false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -655,7 +655,7 @@ func testDiskUsageDoubleCount(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -729,7 +729,7 @@ func testDiskUsageBatch(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -830,7 +830,7 @@ func testDiskUsageEstimation(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -848,11 +848,11 @@ func testDiskUsageEstimation(dirFunc mkShardFunc, t *testing.T) {
 
 	// Delete checkpoint
 	fs.Close()
-	os.Remove(filepath.Join(temp, flatfs.DiskUsageFile))
+	os.Remove(filepath.Join(temp, aiozfs.DiskUsageFile))
 
 	// This will do a full du
-	flatfs.DiskUsageFilesAverage = -1
-	fs, err = flatfs.Open(temp, false)
+	aiozfs.DiskUsageFilesAverage = -1
+	fs, err = aiozfs.Open(temp, false)
 	if err != nil {
 		t.Fatalf("Open fail: %v\n", err)
 	}
@@ -863,13 +863,13 @@ func testDiskUsageEstimation(dirFunc mkShardFunc, t *testing.T) {
 	}
 
 	fs.Close()
-	os.Remove(filepath.Join(temp, flatfs.DiskUsageFile))
+	os.Remove(filepath.Join(temp, aiozfs.DiskUsageFile))
 
 	// This will estimate the size. Since all files are the same
 	// length we can use a low file average number.
-	flatfs.DiskUsageFilesAverage = 100
+	aiozfs.DiskUsageFilesAverage = 100
 	// Make sure size is correctly calculated on re-open
-	fs, err = flatfs.Open(temp, false)
+	fs, err = aiozfs.Open(temp, false)
 	if err != nil {
 		t.Fatalf("Open fail: %v\n", err)
 	}
@@ -897,7 +897,7 @@ func testDiskUsageEstimation(dirFunc mkShardFunc, t *testing.T) {
 	fs.Close()
 
 	// Reopen into a new variable
-	fs2, err := flatfs.Open(temp, false)
+	fs2, err := aiozfs.Open(temp, false)
 	if err != nil {
 		t.Fatalf("Open fail: %v\n", err)
 	}
@@ -915,7 +915,7 @@ func testBatchPut(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -931,7 +931,7 @@ func testBatchDelete(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -947,7 +947,7 @@ func testClose(dirFunc mkShardFunc, t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, dirFunc(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, dirFunc(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -971,29 +971,29 @@ func TestSHARDINGFile(t *testing.T) {
 	tempdir, cleanup := tempdir(t)
 	defer cleanup()
 
-	fun := flatfs.IPFS_DEF_SHARD
+	fun := aiozfs.IPFS_DEF_SHARD
 
-	err := flatfs.Create(tempdir, fun)
+	err := aiozfs.Create(tempdir, fun)
 	if err != nil {
 		t.Fatalf("Create: %v\n", err)
 	}
 
-	fs, err := flatfs.Open(tempdir, false)
+	fs, err := aiozfs.Open(tempdir, false)
 	if err != nil {
 		t.Fatalf("Open fail: %v\n", err)
 	}
-	if fs.ShardStr() != flatfs.IPFS_DEF_SHARD_STR {
-		t.Fatalf("Expected '%s' for shard function got '%s'", flatfs.IPFS_DEF_SHARD_STR, fs.ShardStr())
+	if fs.ShardStr() != aiozfs.IPFS_DEF_SHARD_STR {
+		t.Fatalf("Expected '%s' for shard function got '%s'", aiozfs.IPFS_DEF_SHARD_STR, fs.ShardStr())
 	}
 	fs.Close()
 
-	fs, err = flatfs.CreateOrOpen(tempdir, fun, false)
+	fs, err = aiozfs.CreateOrOpen(tempdir, fun, false)
 	if err != nil {
 		t.Fatalf("Could not reopen repo: %v\n", err)
 	}
 	fs.Close()
 
-	fs, err = flatfs.CreateOrOpen(tempdir, flatfs.Prefix(5), false)
+	fs, err = aiozfs.CreateOrOpen(tempdir, aiozfs.Prefix(5), false)
 	if err == nil {
 		fs.Close()
 		t.Fatalf("Was able to open repo with incompatible sharding function")
@@ -1001,7 +1001,7 @@ func TestSHARDINGFile(t *testing.T) {
 }
 
 func TestInvalidPrefix(t *testing.T) {
-	_, err := flatfs.ParseShardFunc("/bad/prefix/v1/next-to-last/2")
+	_, err := aiozfs.ParseShardFunc("/bad/prefix/v1/next-to-last/2")
 	if err == nil {
 		t.Fatalf("Expected an error while parsing a shard identifier with a bad prefix")
 	}
@@ -1016,7 +1016,7 @@ func TestNonDatastoreDir(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = flatfs.Create(tempdir, flatfs.NextToLast(2))
+	err = aiozfs.Create(tempdir, aiozfs.NextToLast(2))
 	if err == nil {
 		t.Fatalf("Expected an error when creating a datastore in a non-empty directory")
 	}
@@ -1027,7 +1027,7 @@ func TestNoCluster(t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, tempdir)
 
-	fs, err := flatfs.CreateOrOpen(tempdir, flatfs.NextToLast(1), false)
+	fs, err := aiozfs.CreateOrOpen(tempdir, aiozfs.NextToLast(1), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -1067,7 +1067,7 @@ func TestNoCluster(t *testing.T) {
 	count := 0
 	for _, dir := range dirs {
 		switch dir.Name() {
-		case flatfs.SHARDING_FN, flatfs.README_FN, flatfs.DiskUsageFile, ".temp":
+		case aiozfs.SHARDING_FN, aiozfs.README_FN, aiozfs.DiskUsageFile, ".temp":
 			continue
 		}
 		count += 1
@@ -1101,7 +1101,7 @@ func BenchmarkConsecutivePut(b *testing.B) {
 	temp, cleanup := tempdir(b)
 	defer cleanup()
 
-	fs, err := flatfs.CreateOrOpen(temp, flatfs.Prefix(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, aiozfs.Prefix(2), false)
 	if err != nil {
 		b.Fatalf("New fail: %v\n", err)
 	}
@@ -1133,7 +1133,7 @@ func BenchmarkBatchedPut(b *testing.B) {
 	temp, cleanup := tempdir(b)
 	defer cleanup()
 
-	fs, err := flatfs.CreateOrOpen(temp, flatfs.Prefix(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, aiozfs.Prefix(2), false)
 	if err != nil {
 		b.Fatalf("New fail: %v\n", err)
 	}
@@ -1165,7 +1165,7 @@ func TestQueryLeak(t *testing.T) {
 	temp, cleanup := tempdir(t)
 	defer cleanup()
 
-	fs, err := flatfs.CreateOrOpen(temp, flatfs.Prefix(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, aiozfs.Prefix(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
@@ -1205,7 +1205,7 @@ func TestSuite(t *testing.T) {
 	defer cleanup()
 	defer checkTemp(t, temp)
 
-	fs, err := flatfs.CreateOrOpen(temp, flatfs.Prefix(2), false)
+	fs, err := aiozfs.CreateOrOpen(temp, aiozfs.Prefix(2), false)
 	if err != nil {
 		t.Fatalf("New fail: %v\n", err)
 	}
