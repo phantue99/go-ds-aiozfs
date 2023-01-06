@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/ipfs/go-datastore"
-	aiozfs "github.com/phantue/go-ds-aiozfs"
+	aiozfs "github.com/phantue99/go-ds-aiozfs"
 )
 
 func TestMove(t *testing.T) {

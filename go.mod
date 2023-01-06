@@ -1,4 +1,4 @@
-module github.com/phantue/go-ds-aiozfs
+module github.com/phantue99/go-ds-aiozfs
 
 require (
 	github.com/alexbrainman/goissue34681 v0.0.0-20191006012335-3fc7a47baff5
