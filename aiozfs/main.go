@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	aiozfs "github.com/ipfs/go-ds-aiozfs"
+	aiozfs "github.com/phantue/go-ds-aiozfs"
 )
 
 // To convert from the old format to a new format with a different
